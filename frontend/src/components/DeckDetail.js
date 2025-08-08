@@ -86,19 +86,22 @@ const DeckDetail = () => {
     }
   };
 
-  const handleAIContentExtracted = async (content, contentType) => {
+  const handleAIContentExtracted = async (content, contentType = 'text') => {
     try {
       setIsGenerating(true);
       
       // Call the AI service to generate flashcards from the content
-      const response = await axios.post('/ai/generate-flashcards', {
-        content,
+      const response = await axios.post('/ai/generate', {
+        text: content,
         contentType,
-        deckId: id
+        topic: deck?.name || 'General',
+        numberOfCards: 12,
+        difficulty: 'medium',
+        language: 'english'
       });
       
       // Add each generated flashcard
-      const { flashcards: generatedFlashcards } = response.data;
+      const generatedFlashcards = Array.isArray(response.data) ? response.data : (response.data?.flashcards || []);
       let successCount = 0;
       
       for (const flashcard of generatedFlashcards) {
