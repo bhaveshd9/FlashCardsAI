@@ -50,47 +50,73 @@ const DeckList = () => {
       const createdDeck = deckResponse.data;
       
       // If AI generation is enabled, generate flashcards
-      if (newDeck.useAI && newDeck.aiText.trim()) {
-        try {
-          console.log('Generating AI flashcards for new deck:', {
-            text: newDeck.aiText,
-            numberOfCards: newDeck.aiNumberOfCards,
-            topic: newDeck.name,
-            difficulty: "medium"
-          });
-          
-          const aiResponse = await axios.post('/ai/generate', {
-            text: newDeck.aiText,
-            numberOfCards: newDeck.aiNumberOfCards,
-            topic: newDeck.name,
-            difficulty: "medium",
-            contentType: newDeck.contentType || 'text'
-          });
-          
-          console.log('AI response:', aiResponse.data);
-          console.log('Number of cards requested:', newDeck.aiNumberOfCards);
-          console.log('Number of cards received:', aiResponse.data ? aiResponse.data.length : 0);
-          
-          // Add generated flashcards to the deck
-          if (aiResponse.data && Array.isArray(aiResponse.data) && aiResponse.data.length > 0) {
-            let addedCount = 0;
-            for (const flashcardData of aiResponse.data) {
-              if (flashcardData.front && flashcardData.back) {
-                await axios.post(`/flashcards/deck/${createdDeck.id}`, {
-                  front: flashcardData.front,
-                  back: flashcardData.back
-                });
-                addedCount++;
-              }
+      if (newDeck.useAI) {
+        let contentToProcess = newDeck.aiText.trim();
+        
+        // If file upload is selected, process the uploaded file first
+        if (newDeck.contentType === 'file' && newDeck.uploadedFile) {
+          try {
+            console.log('Processing uploaded file:', newDeck.uploadedFile.name);
+            const { processFileUpload } = await import('../services/contentService');
+            const fileResult = await processFileUpload(newDeck.uploadedFile);
+            
+            if (fileResult.success && fileResult.data?.content) {
+              contentToProcess = fileResult.data.content;
+              console.log('Extracted content from file:', contentToProcess.substring(0, 200) + '...');
+            } else {
+              throw new Error(fileResult.error || 'Failed to extract content from file');
             }
-            console.log('Added', addedCount, 'flashcards to new deck');
-            toast.success(`Deck created with ${addedCount} AI-generated flashcards!`);
-          } else {
-            toast.success('Deck created successfully! (No flashcards generated)');
+          } catch (fileError) {
+            console.error('Error processing uploaded file:', fileError);
+            toast.error('Failed to process uploaded file');
+            return;
           }
-        } catch (aiError) {
-          console.error('Error generating AI flashcards:', aiError);
-          toast.success('Deck created successfully! (AI generation failed)');
+        }
+        
+        if (contentToProcess) {
+          try {
+            console.log('Generating AI flashcards for new deck:', {
+              text: contentToProcess.substring(0, 200) + '...',
+              numberOfCards: newDeck.aiNumberOfCards,
+              topic: newDeck.name,
+              difficulty: "medium"
+            });
+            
+            const aiResponse = await axios.post('/ai/generate', {
+              text: contentToProcess,
+              numberOfCards: newDeck.aiNumberOfCards,
+              topic: newDeck.name,
+              difficulty: "medium",
+              contentType: newDeck.contentType || 'text'
+            });
+            
+            console.log('AI response:', aiResponse.data);
+            console.log('Number of cards requested:', newDeck.aiNumberOfCards);
+            console.log('Number of cards received:', aiResponse.data ? aiResponse.data.length : 0);
+            
+            // Add generated flashcards to the deck
+            if (aiResponse.data && Array.isArray(aiResponse.data) && aiResponse.data.length > 0) {
+              let addedCount = 0;
+              for (const flashcardData of aiResponse.data) {
+                if (flashcardData.front && flashcardData.back) {
+                  await axios.post(`/flashcards/deck/${createdDeck.id}`, {
+                    front: flashcardData.front,
+                    back: flashcardData.back
+                  });
+                  addedCount++;
+                }
+              }
+              console.log('Added', addedCount, 'flashcards to new deck');
+              toast.success(`Deck created with ${addedCount} AI-generated flashcards!`);
+            } else {
+              toast.success('Deck created successfully! (No flashcards generated)');
+            }
+          } catch (aiError) {
+            console.error('Error generating AI flashcards:', aiError);
+            toast.success('Deck created successfully! (AI generation failed)');
+          }
+        } else {
+          toast.success('Deck created successfully! (No content to process)');
         }
       } else {
         toast.success('Deck created successfully!');

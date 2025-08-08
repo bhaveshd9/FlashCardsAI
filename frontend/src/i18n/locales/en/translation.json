@@ -1,6 +1,8 @@
 {
   "common": {
     "welcome": "Welcome back, {{name}}!",
+    "user": "User",
+    "days": "days",
     "dashboard": "Dashboard",
     "study": "Study",
     "decks": "Decks",

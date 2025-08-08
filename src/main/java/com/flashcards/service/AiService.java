@@ -123,12 +123,14 @@ public class AiService {
         String lowerText = text.toLowerCase();
         String lowerTopic = topic.toLowerCase();
         
+        // Only consider it a language learning request if there are explicit language learning indicators
         return (lowerText.contains("in hindi") || lowerText.contains("in spanish") || 
                 lowerText.contains("in french") || lowerText.contains("in german") ||
                 lowerText.contains("fruit name") || lowerText.contains("translate") ||
+                lowerText.contains("vocabulary") || lowerText.contains("learn") ||
                 lowerTopic.contains("to hindi") || lowerTopic.contains("to spanish") ||
                 lowerTopic.contains("to french") || lowerTopic.contains("english to") ||
-                !language.equals("english"));
+                lowerTopic.contains("language") || lowerTopic.contains("vocabulary"));
     }
     
     private String buildLanguageLearningPrompt(AiGenerationRequest request) {

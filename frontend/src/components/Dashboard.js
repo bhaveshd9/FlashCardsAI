@@ -45,15 +45,29 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
+      // Check authentication
+      const token = localStorage.getItem('flashcards_token');
+      console.log('Dashboard auth check:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        user: user
+      });
+      
+      if (!token) {
+        console.error('No token found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      
       // Fetch decks in parallel with activities
+      console.log('Fetching dashboard data...');
       const [decksResponse, activitiesResponse] = await Promise.all([
-        axios.get('/decks/my', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('flashcards_token')}`
-          }
-        }),
+        axios.get('/decks/my'),
         getRecentActivities(5) // Get 5 most recent activities
       ]);
+      
+      console.log('Decks response:', decksResponse.data);
+      console.log('Number of decks:', decksResponse.data?.length || 0);
       
       // Calculate study streak (mock implementation - replace with actual logic)
       const studyStreak = Math.floor(Math.random() * 10); // Mock data
@@ -61,16 +75,28 @@ const Dashboard = () => {
       // Calculate cards studied today (mock implementation - replace with actual logic)
       const cardsStudiedToday = Math.floor(Math.random() * 20); // Mock data
       
-      setStats({
-        totalDecks: decksResponse.data.length,
+      const newStats = {
+        totalDecks: decksResponse.data?.length || 0,
         studyStreak,
         cardsStudiedToday,
         recentActivities: activitiesResponse || []
-      });
+      };
+      
+      console.log('Setting stats:', newStats);
+      setStats(newStats);
       
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Set default stats on error
+      setStats({
+        totalDecks: 0,
+        studyStreak: 0,
+        cardsStudiedToday: 0,
+        recentActivities: []
+      });
     } finally {
       setLoading(false);
     }
@@ -350,18 +376,20 @@ const Dashboard = () => {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No activity yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">Your recent activities will appear here.</p>
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/decks/new')}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      <Plus className="-ml-1 mr-2 h-4 w-4" />
-                      Create your first deck
-                    </button>
-                  </div>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">{t('dashboard.noActivity')}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{t('dashboard.noActivityDescription')}</p>
+                  {stats.totalDecks === 0 && (
+                    <div className="mt-6">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/decks/new')}
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        <Plus className="-ml-1 mr-2 h-4 w-4" />
+                        {t('dashboard.createFirstDeck')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
