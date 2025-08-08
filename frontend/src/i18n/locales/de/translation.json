@@ -1,0 +1,46 @@
+{
+  "app": {
+    "title": "FlashCards AI",
+    "loading": "Wird geladen...",
+    "error": "Fehler"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?"
+  },
+  "dashboard": {
+    "welcome": "Willkommen",
+    "recentActivity": "Letzte Aktivitäten",
+    "noActivity": "Keine letzten Aktivitäten",
+    "decks": "Kartensätze",
+    "cards": "Karten",
+    "streak": "Serie"
+  },
+  "decks": {
+    "create": "Kartensatz erstellen",
+    "edit": "Kartensatz bearbeiten",
+    "delete": "Kartensatz löschen",
+    "noDecks": "Keine Kartensätze gefunden",
+    "createFirst": "Erstellen Sie Ihren ersten Kartensatz"
+  },
+  "cards": {
+    "add": "Karte hinzufügen",
+    "edit": "Karte bearbeiten",
+    "delete": "Karte löschen",
+    "front": "Vorderseite",
+    "back": "Rückseite",
+    "flip": "Umdrehen"
+  }
+}

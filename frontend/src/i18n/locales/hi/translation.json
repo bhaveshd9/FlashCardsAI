@@ -1,0 +1,58 @@
+{
+  "common": {
+    "welcome": "वापसी पर स्वागत है, {{name}}!",
+    "dashboard": "डैशबोर्ड",
+    "study": "अध्ययन",
+    "decks": "डेक",
+    "settings": "सेटिंग्स",
+    "signOut": "साइन आउट",
+    "loading": "लोड हो रहा है...",
+    "error": "एक त्रुटि हुई",
+    "success": "सफलता",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "create": "बनाएं",
+    "back": "पीछे जाएं"
+  },
+  "dashboard": {
+    "title": "डैशबोर्ड",
+    "welcome": "आपके सीखने के डैशबोर्ड में आपका स्वागत है",
+    "totalDecks": "कुल डेक",
+    "studyStreak": "अध्ययन स्ट्रीक",
+    "cardsStudiedToday": "आज पढ़े गए कार्ड",
+    "quickActions": "त्वरित कार्य",
+    "recentActivity": "हाल की गतिविधियां",
+    "noActivity": "अभी तक कोई गतिविधि नहीं",
+    "noActivityDescription": "आपकी हाल की गतिविधियां यहां दिखाई देंगी।",
+    "createFirstDeck": "अपना पहला डेक बनाएं"
+  },
+  "actions": {
+    "createDeck": "नया डेक बनाएं",
+    "startStudying": "अध्ययन शुरू करें",
+    "viewStats": "आंकड़े देखें",
+    "adminPanel": "व्यवस्थापक पैनल"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "रजिस्टर करें",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "क्या आप अपना पासवर्ड भूल गए?",
+    "noAccount": "खाता नहीं है? साइन अप करें",
+    "hasAccount": "क्या आपके पास पहले से एक खाता है? साइन इन करें"
+  },
+  "decks": {
+    "title": "मेरे डेक",
+    "create": "डेक बनाएं",
+    "edit": "डेक संपादित करें",
+    "deleteConfirm": "क्या आप वाकई इस डेक को हटाना चाहते हैं?",
+    "noDecks": "आपके पास अभी तक कोई डेक नहीं है।",
+    "createFirstDeck": "शुरू करने के लिए अपना पहला डेक बनाएं!",
+    "cardsCount": "{{count}} कार्ड",
+    "lastStudied": "अंतिम बार पढ़ा गया: {{date}}",
+    "neverStudied": "अभी तक नहीं पढ़ा गया"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "common": {
+    "welcome": "Welcome back, {{name}}!",
+    "dashboard": "Dashboard",
+    "study": "Study",
+    "decks": "Decks",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to your learning dashboard",
+    "totalDecks": "Total Decks",
+    "studyStreak": "Study Streak",
+    "cardsStudiedToday": "Cards Studied Today",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No activity yet",
+    "noActivityDescription": "Your recent activities will appear here.",
+    "createFirstDeck": "Create your first deck"
+  },
+  "actions": {
+    "createDeck": "Create New Deck",
+    "startStudying": "Start Studying",
+    "viewStats": "View Stats",
+    "adminPanel": "Admin Panel"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account? Sign up",
+    "hasAccount": "Already have an account? Sign in"
+  },
+  "decks": {
+    "title": "My Decks",
+    "create": "Create Deck",
+    "edit": "Edit Deck",
+    "deleteConfirm": "Are you sure you want to delete this deck?",
+    "noDecks": "You don't have any decks yet.",
+    "createFirstDeck": "Create your first deck to get started!",
+    "cardsCount": "{{count}} cards",
+    "lastStudied": "Last studied {{date}}",
+    "neverStudied": "Never studied"
+  },
+  "study": {
+    "title": "Study",
+    "finish": "Finish",
+    "next": "Next",
+    "previous": "Previous",
+    "showAnswer": "Show Answer",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "sessionComplete": "Study Session Complete!",
+    "cardsStudied": "{{count}} cards studied",
+    "correctRate": "{{percent}}% correct"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "account": "Account",
+    "saveChanges": "Save Changes"
+  }
+}

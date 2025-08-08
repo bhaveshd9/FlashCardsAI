@@ -1,0 +1,46 @@
+{
+  "app": {
+    "title": "闪卡 AI",
+    "loading": "加载中...",
+    "error": "错误"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "登出",
+    "register": "注册",
+    "email": "电子邮件",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？"
+  },
+  "dashboard": {
+    "welcome": "欢迎",
+    "recentActivity": "最近活动",
+    "noActivity": "没有最近活动",
+    "decks": "卡片组",
+    "cards": "卡片",
+    "streak": "连续"
+  },
+  "decks": {
+    "create": "创建卡片组",
+    "edit": "编辑卡片组",
+    "delete": "删除卡片组",
+    "noDecks": "未找到卡片组",
+    "createFirst": "创建您的第一个卡片组"
+  },
+  "cards": {
+    "add": "添加卡片",
+    "edit": "编辑卡片",
+    "delete": "删除卡片",
+    "front": "正面",
+    "back": "背面",
+    "flip": "翻转"
+  }
+}

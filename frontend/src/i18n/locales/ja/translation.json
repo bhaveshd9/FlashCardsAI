@@ -1,0 +1,46 @@
+{
+  "app": {
+    "title": "フラッシュカード AI",
+    "loading": "読み込み中...",
+    "error": "エラー"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "back": "戻る"
+  },
+  "auth": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "register": "登録",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirmPassword": "パスワードの確認",
+    "forgotPassword": "パスワードをお忘れですか？"
+  },
+  "dashboard": {
+    "welcome": "ようこそ",
+    "recentActivity": "最近のアクティビティ",
+    "noActivity": "最近のアクティビティはありません",
+    "decks": "デッキ",
+    "cards": "カード",
+    "streak": "連続記録"
+  },
+  "decks": {
+    "create": "デッキを作成",
+    "edit": "デッキを編集",
+    "delete": "デッキを削除",
+    "noDecks": "デッキが見つかりません",
+    "createFirst": "最初のデッキを作成"
+  },
+  "cards": {
+    "add": "カードを追加",
+    "edit": "カードを編集",
+    "delete": "カードを削除",
+    "front": "表面",
+    "back": "裏面",
+    "flip": "めくる"
+  }
+}

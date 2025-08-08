@@ -1,0 +1,58 @@
+{
+  "common": {
+    "welcome": "¡Bienvenido de nuevo, {{name}}!",
+    "dashboard": "Panel de control",
+    "study": "Estudiar",
+    "decks": "Mazos",
+    "settings": "Configuración",
+    "signOut": "Cerrar sesión",
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Atrás"
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "welcome": "Bienvenido a tu panel de aprendizaje",
+    "totalDecks": "Total de mazos",
+    "studyStreak": "Racha de estudio",
+    "cardsStudiedToday": "Tarjetas estudiadas hoy",
+    "quickActions": "Acciones rápidas",
+    "recentActivity": "Actividad reciente",
+    "noActivity": "Aún no hay actividad",
+    "noActivityDescription": "Tus actividades recientes aparecerán aquí.",
+    "createFirstDeck": "Crea tu primer mazo"
+  },
+  "actions": {
+    "createDeck": "Crear nuevo mazo",
+    "startStudying": "Comenzar a estudiar",
+    "viewStats": "Ver estadísticas",
+    "adminPanel": "Panel de administración"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes una cuenta? Regístrate",
+    "hasAccount": "¿Ya tienes una cuenta? Inicia sesión"
+  },
+  "decks": {
+    "title": "Mis mazos",
+    "create": "Crear mazo",
+    "edit": "Editar mazo",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este mazo?",
+    "noDecks": "Aún no tienes ningún mazo.",
+    "createFirstDeck": "¡Crea tu primer mazo para comenzar!",
+    "cardsCount": "{{count}} tarjetas",
+    "lastStudied": "Último estudio: {{date}}",
+    "neverStudied": "Nunca estudiado"
+  }
+}
