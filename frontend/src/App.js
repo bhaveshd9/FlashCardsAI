@@ -53,6 +53,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<PrivateRoute><><Navbar /><Dashboard /></></PrivateRoute>} />
+            <Route path="/dashboard" element={<PrivateRoute><><Navbar /><Dashboard /></></PrivateRoute>} />
             <Route path="/decks" element={<PrivateRoute><><Navbar /><DeckList /></></PrivateRoute>} />
             <Route path="/decks/:id" element={<PrivateRoute><><Navbar /><DeckDetail /></></PrivateRoute>} />
             <Route path="/study/:deckId" element={<PrivateRoute><><Navbar /><StudyMode /></></PrivateRoute>} />

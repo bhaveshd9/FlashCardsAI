@@ -64,6 +64,12 @@ public class AiService {
     private String buildPrompt(AiGenerationRequest request) {
         String text = request.getText() != null ? request.getText() : "";
         String topic = request.getTopic() != null ? request.getTopic() : "General";
+        String language = request.getLanguage() != null ? request.getLanguage() : "english";
+        
+        // Check if this is a translation/language learning request
+        if (isLanguageLearningRequest(text, topic, language)) {
+            return buildLanguageLearningPrompt(request);
+        }
         
         // Check if the text contains specific instructions for flashcard format
         if (text.toLowerCase().contains("question should be when") || 
@@ -72,25 +78,29 @@ public class AiService {
             
             // Custom prompt for "when to use" format
             return String.format(
-                "Generate %d flashcards about %s. " +
+                "Generate %d flashcards about %s in %s language. " +
                 "Follow this specific format:\n" +
                 "- Each question should ask 'When do we use X?' or 'When should we use X?'\n" +
-                "- Each answer should be the specific data structure, algorithm, or concept name\n\n" +
+                "- Each answer should be the specific data structure, algorithm, or concept name\n" +
+                "- Generate all content in %s language\n\n" +
                 "Instructions: %s\n\n" +
                 "Please respond with JSON format:\n" +
                 "[\n" +
                 "  {\"question\": \"When do we use X?\", \"answer\": \"Data Structure Name\"},\n" +
                 "  {\"question\": \"When should we use Y?\", \"answer\": \"Another Data Structure\"}\n" +
                 "]\n\n" +
-                "Make sure each question asks about WHEN to use something, and the answer is the specific name.",
+                "Make sure each question asks about WHEN to use something, and the answer is the specific name. Generate everything in %s.",
                 request.getNumberOfCards(),
                 topic,
-                text
+                language,
+                language,
+                text,
+                language
             );
         } else {
             // Default prompt for regular flashcards
             return String.format(
-                "Generate %d flashcards from the following text. " +
+                "Generate %d flashcards from the following text in %s language. " +
                 "Topic: %s, Difficulty: %s\n\n" +
                 "Text: %s\n\n" +
                 "Please respond with JSON format:\n" +
@@ -98,13 +108,87 @@ public class AiService {
                 "  {\"question\": \"Question 1\", \"answer\": \"Answer 1\"},\n" +
                 "  {\"question\": \"Question 2\", \"answer\": \"Answer 2\"}\n" +
                 "]\n\n" +
-                "Make questions clear and answers concise.",
+                "Make questions clear and answers concise. Generate all content in %s language.",
                 request.getNumberOfCards(),
+                language,
                 topic,
                 request.getDifficulty(),
-                text
+                text,
+                language
             );
         }
+    }
+    
+    private boolean isLanguageLearningRequest(String text, String topic, String language) {
+        String lowerText = text.toLowerCase();
+        String lowerTopic = topic.toLowerCase();
+        
+        return (lowerText.contains("in hindi") || lowerText.contains("in spanish") || 
+                lowerText.contains("in french") || lowerText.contains("in german") ||
+                lowerText.contains("fruit name") || lowerText.contains("translate") ||
+                lowerTopic.contains("to hindi") || lowerTopic.contains("to spanish") ||
+                lowerTopic.contains("to french") || lowerTopic.contains("english to") ||
+                !language.equals("english"));
+    }
+    
+    private String buildLanguageLearningPrompt(AiGenerationRequest request) {
+        String text = request.getText() != null ? request.getText() : "";
+        String topic = request.getTopic() != null ? request.getTopic() : "General";
+        String language = request.getLanguage() != null ? request.getLanguage() : "english";
+        
+        // Extract the target language from topic or text
+        String targetLanguage = extractTargetLanguage(text, topic, language);
+        
+        return String.format(
+            "Generate %d language learning flashcards. " +
+            "Topic: %s\n" +
+            "Request: %s\n" +
+            "Target Language: %s\n\n" +
+            "Create flashcards that help learn %s vocabulary/phrases:\n" +
+            "- Questions should be in English asking for the %s translation\n" +
+            "- Answers should be in %s\n" +
+            "- Focus on practical, useful vocabulary\n\n" +
+            "Please respond with JSON format:\n" +
+            "[\n" +
+            "  {\"question\": \"What is 'apple' in %s?\", \"answer\": \"सेब\"},\n" +
+            "  {\"question\": \"What is 'banana' in %s?\", \"answer\": \"केला\"}\n" +
+            "]\n\n" +
+            "Generate useful vocabulary flashcards for learning %s.",
+            request.getNumberOfCards(),
+            topic,
+            text,
+            targetLanguage,
+            targetLanguage,
+            targetLanguage,
+            targetLanguage,
+            targetLanguage,
+            targetLanguage,
+            targetLanguage
+        );
+    }
+    
+    private String extractTargetLanguage(String text, String topic, String language) {
+        String combined = (text + " " + topic + " " + language).toLowerCase();
+        
+        // Map language codes to language names
+        if (language.equals("hi") || combined.contains("hindi")) return "Hindi";
+        if (language.equals("es") || combined.contains("spanish") || combined.contains("español")) return "Spanish";
+        if (language.equals("fr") || combined.contains("french") || combined.contains("français")) return "French";
+        if (language.equals("de") || combined.contains("german") || combined.contains("deutsch")) return "German";
+        if (language.equals("it") || combined.contains("italian")) return "Italian";
+        if (language.equals("ja") || combined.contains("japanese") || combined.contains("日本語")) return "Japanese";
+        if (language.equals("zh") || combined.contains("chinese") || combined.contains("中文")) return "Chinese";
+        if (language.equals("ko") || combined.contains("korean") || combined.contains("한국어")) return "Korean";
+        if (language.equals("pt") || combined.contains("portuguese")) return "Portuguese";
+        if (language.equals("ru") || combined.contains("russian")) return "Russian";
+        if (language.equals("ar") || combined.contains("arabic")) return "Arabic";
+        
+        // If language is not English, try to capitalize it
+        if (!language.equals("en") && !language.equals("english")) {
+            return language.substring(0, 1).toUpperCase() + language.substring(1);
+        }
+        
+        return "Hindi"; // Default for Indian users
     }
 
     private String callOpenAI(String prompt) throws IOException {
@@ -198,12 +282,19 @@ public class AiService {
     private List<FlashcardData> generateCustomFlashcards(AiGenerationRequest request) {
         String text = request.getText() != null ? request.getText() : "";
         String topic = request.getTopic() != null ? request.getTopic() : "General";
+        String language = request.getLanguage() != null ? request.getLanguage() : "english";
         int numberOfCards = request.getNumberOfCards();
         
-        System.out.println("Custom Generation - Text: '" + text + "', Topic: '" + topic + "', Cards: " + numberOfCards);
+        System.out.println("Custom Generation - Text: '" + text + "', Topic: '" + topic + "', Language: '" + language + "', Cards: " + numberOfCards);
         
         String normalizedText = text.toLowerCase().trim();
         String normalizedTopic = topic.toLowerCase().trim();
+        
+        // Check for language learning requests first
+        if (isLanguageLearningRequest(text, topic, language)) {
+            System.out.println("Detected language learning request - generating translation flashcards");
+            return generateLanguageLearningFlashcards(request);
+        }
         
         // Check for specific "when to use" format request
         if (normalizedText.contains("question should be when") || 
@@ -218,6 +309,163 @@ public class AiService {
         }
         
         return generateSimpleFlashcards(request);
+    }
+    
+    private List<FlashcardData> generateLanguageLearningFlashcards(AiGenerationRequest request) {
+        String text = request.getText() != null ? request.getText() : "";
+        String topic = request.getTopic() != null ? request.getTopic() : "General";
+        String language = request.getLanguage() != null ? request.getLanguage() : "english";
+        int numberOfCards = request.getNumberOfCards();
+        
+        List<FlashcardData> flashcards = new ArrayList<>();
+        String targetLanguage = extractTargetLanguage(text, topic, language);
+        
+        // Generate language learning flashcards based on the request
+        if (text.toLowerCase().contains("fruit name") || text.toLowerCase().contains("fruits")) {
+            // Fruit vocabulary flashcards
+            String[] fruitCards = getFruitVocabulary(targetLanguage);
+            
+            String[] selectedCards = getRandomCards(fruitCards, numberOfCards);
+            for (String card : selectedCards) {
+                String[] parts = card.split("\\|", 2);
+                if (parts.length == 2) {
+                    flashcards.add(new FlashcardData(parts[0].trim(), parts[1].trim()));
+                }
+            }
+        } else {
+            // Generate basic vocabulary flashcards
+            String[] basicCards = getBasicVocabulary(targetLanguage);
+            
+            String[] selectedCards = getRandomCards(basicCards, numberOfCards);
+            for (String card : selectedCards) {
+                String[] parts = card.split("\\|", 2);
+                if (parts.length == 2) {
+                    flashcards.add(new FlashcardData(parts[0].trim(), parts[1].trim()));
+                }
+            }
+        }
+        
+        return flashcards;
+    }
+    
+    private String[] getFruitVocabulary(String targetLanguage) {
+        switch (targetLanguage.toLowerCase()) {
+            case "hindi":
+                return new String[]{
+                    "What is 'apple' in " + targetLanguage + "?|सेब (seb)",
+                    "What is 'banana' in " + targetLanguage + "?|केला (kela)",
+                    "What is 'mango' in " + targetLanguage + "?|आम (aam)",
+                    "What is 'orange' in " + targetLanguage + "?|संतरा (santara)",
+                    "What is 'grapes' in " + targetLanguage + "?|अंगूर (angoor)",
+                    "What is 'pineapple' in " + targetLanguage + "?|अनानास (ananas)",
+                    "What is 'watermelon' in " + targetLanguage + "?|तरबूज (tarbooz)",
+                    "What is 'strawberry' in " + targetLanguage + "?|स्ट्रॉबेरी (strawberry)",
+                    "What is 'pomegranate' in " + targetLanguage + "?|अनार (anar)",
+                    "What is 'guava' in " + targetLanguage + "?|अमरूद (amrood)"
+                };
+            case "spanish":
+                return new String[]{
+                    "What is 'apple' in " + targetLanguage + "?|manzana",
+                    "What is 'banana' in " + targetLanguage + "?|plátano",
+                    "What is 'mango' in " + targetLanguage + "?|mango",
+                    "What is 'orange' in " + targetLanguage + "?|naranja",
+                    "What is 'grapes' in " + targetLanguage + "?|uvas",
+                    "What is 'pineapple' in " + targetLanguage + "?|piña",
+                    "What is 'watermelon' in " + targetLanguage + "?|sandía",
+                    "What is 'strawberry' in " + targetLanguage + "?|fresa",
+                    "What is 'pomegranate' in " + targetLanguage + "?|granada",
+                    "What is 'lemon' in " + targetLanguage + "?|limón"
+                };
+            case "french":
+                return new String[]{
+                    "What is 'apple' in " + targetLanguage + "?|pomme",
+                    "What is 'banana' in " + targetLanguage + "?|banane",
+                    "What is 'mango' in " + targetLanguage + "?|mangue",
+                    "What is 'orange' in " + targetLanguage + "?|orange",
+                    "What is 'grapes' in " + targetLanguage + "?|raisins",
+                    "What is 'pineapple' in " + targetLanguage + "?|ananas",
+                    "What is 'watermelon' in " + targetLanguage + "?|pastèque",
+                    "What is 'strawberry' in " + targetLanguage + "?|fraise",
+                    "What is 'pomegranate' in " + targetLanguage + "?|grenade",
+                    "What is 'lemon' in " + targetLanguage + "?|citron"
+                };
+            case "german":
+                return new String[]{
+                    "What is 'apple' in " + targetLanguage + "?|Apfel",
+                    "What is 'banana' in " + targetLanguage + "?|Banane",
+                    "What is 'mango' in " + targetLanguage + "?|Mango",
+                    "What is 'orange' in " + targetLanguage + "?|Orange",
+                    "What is 'grapes' in " + targetLanguage + "?|Trauben",
+                    "What is 'pineapple' in " + targetLanguage + "?|Ananas",
+                    "What is 'watermelon' in " + targetLanguage + "?|Wassermelone",
+                    "What is 'strawberry' in " + targetLanguage + "?|Erdbeere",
+                    "What is 'pomegranate' in " + targetLanguage + "?|Granatapfel",
+                    "What is 'lemon' in " + targetLanguage + "?|Zitrone"
+                };
+            default:
+                // Fallback to Hindi
+                return getFruitVocabulary("Hindi");
+        }
+    }
+    
+    private String[] getBasicVocabulary(String targetLanguage) {
+        switch (targetLanguage.toLowerCase()) {
+            case "hindi":
+                return new String[]{
+                    "What is 'hello' in " + targetLanguage + "?|नमस्ते (namaste)",
+                    "What is 'thank you' in " + targetLanguage + "?|धन्यवाद (dhanyawad)",
+                    "What is 'water' in " + targetLanguage + "?|पानी (paani)",
+                    "What is 'food' in " + targetLanguage + "?|खाना (khana)",
+                    "What is 'house' in " + targetLanguage + "?|घर (ghar)",
+                    "What is 'family' in " + targetLanguage + "?|परिवार (parivar)",
+                    "What is 'friend' in " + targetLanguage + "?|दोस्त (dost)",
+                    "What is 'book' in " + targetLanguage + "?|किताब (kitab)",
+                    "What is 'school' in " + targetLanguage + "?|स्कूल (school)",
+                    "What is 'work' in " + targetLanguage + "?|काम (kaam)"
+                };
+            case "spanish":
+                return new String[]{
+                    "What is 'hello' in " + targetLanguage + "?|hola",
+                    "What is 'thank you' in " + targetLanguage + "?|gracias",
+                    "What is 'water' in " + targetLanguage + "?|agua",
+                    "What is 'food' in " + targetLanguage + "?|comida",
+                    "What is 'house' in " + targetLanguage + "?|casa",
+                    "What is 'family' in " + targetLanguage + "?|familia",
+                    "What is 'friend' in " + targetLanguage + "?|amigo",
+                    "What is 'book' in " + targetLanguage + "?|libro",
+                    "What is 'school' in " + targetLanguage + "?|escuela",
+                    "What is 'work' in " + targetLanguage + "?|trabajo"
+                };
+            case "french":
+                return new String[]{
+                    "What is 'hello' in " + targetLanguage + "?|bonjour",
+                    "What is 'thank you' in " + targetLanguage + "?|merci",
+                    "What is 'water' in " + targetLanguage + "?|eau",
+                    "What is 'food' in " + targetLanguage + "?|nourriture",
+                    "What is 'house' in " + targetLanguage + "?|maison",
+                    "What is 'family' in " + targetLanguage + "?|famille",
+                    "What is 'friend' in " + targetLanguage + "?|ami",
+                    "What is 'book' in " + targetLanguage + "?|livre",
+                    "What is 'school' in " + targetLanguage + "?|école",
+                    "What is 'work' in " + targetLanguage + "?|travail"
+                };
+            case "german":
+                return new String[]{
+                    "What is 'hello' in " + targetLanguage + "?|hallo",
+                    "What is 'thank you' in " + targetLanguage + "?|danke",
+                    "What is 'water' in " + targetLanguage + "?|Wasser",
+                    "What is 'food' in " + targetLanguage + "?|Essen",
+                    "What is 'house' in " + targetLanguage + "?|Haus",
+                    "What is 'family' in " + targetLanguage + "?|Familie",
+                    "What is 'friend' in " + targetLanguage + "?|Freund",
+                    "What is 'book' in " + targetLanguage + "?|Buch",
+                    "What is 'school' in " + targetLanguage + "?|Schule",
+                    "What is 'work' in " + targetLanguage + "?|Arbeit"
+                };
+            default:
+                // Fallback to Hindi
+                return getBasicVocabulary("Hindi");
+        }
     }
     
     private List<FlashcardData> generateWhenToUseFlashcards(String topic, int numberOfCards) {
