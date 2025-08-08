@@ -87,7 +87,8 @@ const DeckList = () => {
               numberOfCards: newDeck.aiNumberOfCards,
               topic: newDeck.name,
               difficulty: "medium",
-              contentType: newDeck.contentType || 'text'
+              contentType: (newDeck.contentType === 'file' ? 'pdf' : (newDeck.contentType || 'text')),
+              language: 'english'
             });
             
             console.log('AI response:', aiResponse.data);

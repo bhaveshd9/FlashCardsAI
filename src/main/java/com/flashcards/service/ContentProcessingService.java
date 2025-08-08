@@ -45,6 +45,9 @@ public class ContentProcessingService {
             stripper.setSortByPosition(true);
             stripper.setAddMoreFormatting(true);
             stripper.setShouldSeparateByBeads(true);
+            // Ensure we read the entire document
+            stripper.setStartPage(1);
+            stripper.setEndPage(document.getNumberOfPages());
 
             String text = stripper.getText(document);
 

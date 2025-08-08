@@ -124,13 +124,14 @@ public class AiService {
         String lowerTopic = topic.toLowerCase();
         
         // Only consider it a language learning request if there are explicit language learning indicators
-        return (lowerText.contains("in hindi") || lowerText.contains("in spanish") || 
-                lowerText.contains("in french") || lowerText.contains("in german") ||
-                lowerText.contains("fruit name") || lowerText.contains("translate") ||
-                lowerText.contains("vocabulary") || lowerText.contains("learn") ||
-                lowerTopic.contains("to hindi") || lowerTopic.contains("to spanish") ||
-                lowerTopic.contains("to french") || lowerTopic.contains("english to") ||
-                lowerTopic.contains("language") || lowerTopic.contains("vocabulary"));
+        // Only trigger when explicitly about language learning/translation, not generic mentions
+        return (
+                lowerText.matches(".*\\b(in|to) (hindi|spanish|french|german|italian|japanese|chinese|korean|portuguese|russian|arabic)\\b.*") ||
+                lowerText.contains("translate to ") ||
+                lowerText.contains("translation cards") ||
+                lowerText.contains("language learning") ||
+                lowerTopic.matches(".*\\b(to|in) (hindi|spanish|french|german|italian|japanese|chinese|korean|portuguese|russian|arabic)\\b.*")
+        );
     }
     
     private String buildLanguageLearningPrompt(AiGenerationRequest request) {
@@ -190,7 +191,7 @@ public class AiService {
             return language.substring(0, 1).toUpperCase() + language.substring(1);
         }
         
-        return "Hindi"; // Default for Indian users
+        return "English"; // Default to English unless explicitly specified
     }
 
     private String callOpenAI(String prompt) throws IOException {
@@ -285,7 +286,7 @@ public class AiService {
         String text = request.getText() != null ? request.getText() : "";
         String topic = request.getTopic() != null ? request.getTopic() : "General";
         String language = request.getLanguage() != null ? request.getLanguage() : "english";
-        int numberOfCards = request.getNumberOfCards();
+        int numberOfCards = Math.max(1, request.getNumberOfCards());
         
         System.out.println("Custom Generation - Text: '" + text + "', Topic: '" + topic + "', Language: '" + language + "', Cards: " + numberOfCards);
         
@@ -317,7 +318,7 @@ public class AiService {
         String text = request.getText() != null ? request.getText() : "";
         String topic = request.getTopic() != null ? request.getTopic() : "General";
         String language = request.getLanguage() != null ? request.getLanguage() : "english";
-        int numberOfCards = request.getNumberOfCards();
+        int numberOfCards = Math.max(1, request.getNumberOfCards());
         
         List<FlashcardData> flashcards = new ArrayList<>();
         String targetLanguage = extractTargetLanguage(text, topic, language);
@@ -522,12 +523,13 @@ public class AiService {
         List<FlashcardData> flashcards = new ArrayList<>();
         String text = request.getText() != null ? request.getText() : "";
         String topic = request.getTopic() != null ? request.getTopic() : "General";
-        int numberOfCards = request.getNumberOfCards();
+        int numberOfCards = Math.max(1, request.getNumberOfCards());
         
         System.out.println("AI Generation Request - Text: '" + text + "', Topic: '" + topic + "', Cards: " + numberOfCards);
         
         // If text is provided, analyze it and generate relevant flashcards
         if (!text.trim().isEmpty()) {
+            // If the contentType is 'pdf', we already received extracted full text
             String cleanText = text.toLowerCase().trim();
             
             // Check if it's about car brands and countries
@@ -621,8 +623,8 @@ public class AiService {
             }
             // Default case - generate based on the actual text content
             else {
-                // Split text into sentences or phrases
-                String[] phrases = text.split("[.!?,\n]");
+                                // Split text into sentences or phrases
+                String[] phrases = text.split("(?<=[.!?])\\s+|\\n");
                 int cardsGenerated = 0;
                 
                 for (String phrase : phrases) {
@@ -799,13 +801,23 @@ public class AiService {
         if (allCards == null || allCards.length == 0) {
             return new String[0];
         }
-        // Shuffle the array and return the EXACT requested number of cards
+        // Shuffle the array and return up to the requested number of cards
         List<String> cardList = new ArrayList<>(Arrays.asList(allCards));
         Collections.shuffle(cardList);
         
-        // Return exactly the requested number, not more
         int cardsToReturn = Math.min(count, cardList.size());
-        return cardList.subList(0, cardsToReturn).toArray(new String[0]);
+        String[] selected = cardList.subList(0, cardsToReturn).toArray(new String[0]);
+        // If there are fewer unique templates than requested, cycle through until we hit count
+        if (cardsToReturn < count && cardList.size() > 0) {
+            List<String> extended = new ArrayList<>(Arrays.asList(selected));
+            int idx = 0;
+            while (extended.size() < count) {
+                extended.add(cardList.get(idx % cardList.size()));
+                idx++;
+            }
+            return extended.subList(0, count).toArray(new String[0]);
+        }
+        return selected;
     }
 
     public static class FlashcardData {

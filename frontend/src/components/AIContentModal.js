@@ -34,13 +34,20 @@ const AIContentModal = ({ isOpen, onClose, onContentExtracted }) => {
       
       if (activeTab === 'file' && fileInputRef.current?.files?.[0]) {
         const file = fileInputRef.current.files[0];
-        extractedText = await processFileUpload(file);
+        const result = await processFileUpload(file);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to process file');
+        }
+        extractedText = result.data?.content || '';
       } else if (activeTab === 'url') {
         const result = await extractContent(content, 'url');
-        extractedText = result.extractedText;
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to extract from URL');
+        }
+        extractedText = result.data?.content || '';
       }
       
-      onContentExtracted(extractedText);
+      onContentExtracted(extractedText, activeTab === 'file' ? 'pdf' : activeTab);
       onClose();
     } catch (err) {
       console.error('Error processing content:', err);
