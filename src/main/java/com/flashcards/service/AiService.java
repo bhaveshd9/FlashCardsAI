@@ -38,53 +38,73 @@ public class AiService {
         System.out.println("AI Generation Request: " + request.getText() + " | Cards: " + request.getNumberOfCards());
         
         try {
-            // Process content based on type
-            String processedText = contentProcessingService.extractTextFromDocument(
-                request.getText(), 
-                request.getContentType()
-            );
+            String text = request.getText() != null ? request.getText() : "";
             
-            System.out.println("Processed text length: " + processedText.length());
-            
-            // If we have valid text, use it to generate flashcards
-            if (processedText != null && !processedText.trim().isEmpty()) {
-                // Create a new request with the processed text
-                AiGenerationRequest processedRequest = new AiGenerationRequest();
-                processedRequest.setText(processedText);
-                processedRequest.setNumberOfCards(request.getNumberOfCards());
-                processedRequest.setTopic(request.getTopic());
-                processedRequest.setDifficulty(request.getDifficulty());
+            // Check if we should use OpenAI API for custom prompts
+            if (apiKey != null && !apiKey.trim().isEmpty() && 
+                (text.toLowerCase().contains("question should be when") || 
+                 text.toLowerCase().contains("when we can use") ||
+                 text.toLowerCase().contains("when to use") ||
+                 text.length() > 100)) {
                 
-                // Try to generate topic-based cards from the actual content
-                return generateTopicBasedFlashcards(processedText, request.getTopic(), request.getNumberOfCards());
+                System.out.println("Using OpenAI API for flashcard generation");
+                return generateWithOpenAI(request);
             } else {
-                System.out.println("No content extracted, using simple flashcards");
-                return generateSimpleFlashcards(request);
+                System.out.println("Using fallback generation method");
+                return generateCustomFlashcards(request);
             }
         } catch (Exception e) {
-            System.err.println("Error processing content: " + e.getMessage());
+            System.err.println("Error in generateFlashcards: " + e.getMessage());
             e.printStackTrace();
-            // Fallback to simple generation
-            return generateSimpleFlashcards(request);
+            // Fallback to custom generation
+            return generateCustomFlashcards(request);
         }
     }
 
     private String buildPrompt(AiGenerationRequest request) {
-        return String.format(
-            "Generate %d flashcards from the following text. " +
-            "Topic: %s, Difficulty: %s\n\n" +
-            "Text: %s\n\n" +
-            "Please respond with JSON format:\n" +
-            "[\n" +
-            "  {\"front\": \"Question 1\", \"back\": \"Answer 1\"},\n" +
-            "  {\"front\": \"Question 2\", \"back\": \"Answer 2\"}\n" +
-            "]\n\n" +
-            "Make questions clear and answers concise.",
-            request.getNumberOfCards(),
-            request.getTopic() != null ? request.getTopic() : "General",
-            request.getDifficulty(),
-            request.getText()
-        );
+        String text = request.getText() != null ? request.getText() : "";
+        String topic = request.getTopic() != null ? request.getTopic() : "General";
+        
+        // Check if the text contains specific instructions for flashcard format
+        if (text.toLowerCase().contains("question should be when") || 
+            text.toLowerCase().contains("when we can use") ||
+            text.toLowerCase().contains("when to use")) {
+            
+            // Custom prompt for "when to use" format
+            return String.format(
+                "Generate %d flashcards about %s. " +
+                "Follow this specific format:\n" +
+                "- Each question should ask 'When do we use X?' or 'When should we use X?'\n" +
+                "- Each answer should be the specific data structure, algorithm, or concept name\n\n" +
+                "Instructions: %s\n\n" +
+                "Please respond with JSON format:\n" +
+                "[\n" +
+                "  {\"question\": \"When do we use X?\", \"answer\": \"Data Structure Name\"},\n" +
+                "  {\"question\": \"When should we use Y?\", \"answer\": \"Another Data Structure\"}\n" +
+                "]\n\n" +
+                "Make sure each question asks about WHEN to use something, and the answer is the specific name.",
+                request.getNumberOfCards(),
+                topic,
+                text
+            );
+        } else {
+            // Default prompt for regular flashcards
+            return String.format(
+                "Generate %d flashcards from the following text. " +
+                "Topic: %s, Difficulty: %s\n\n" +
+                "Text: %s\n\n" +
+                "Please respond with JSON format:\n" +
+                "[\n" +
+                "  {\"question\": \"Question 1\", \"answer\": \"Answer 1\"},\n" +
+                "  {\"question\": \"Question 2\", \"answer\": \"Answer 2\"}\n" +
+                "]\n\n" +
+                "Make questions clear and answers concise.",
+                request.getNumberOfCards(),
+                topic,
+                request.getDifficulty(),
+                text
+            );
+        }
     }
 
     private String callOpenAI(String prompt) throws IOException {
@@ -121,34 +141,133 @@ public class AiService {
         }
     }
 
+    private List<FlashcardData> generateWithOpenAI(AiGenerationRequest request) {
+        try {
+            String prompt = buildPrompt(request);
+            System.out.println("OpenAI Prompt: " + prompt);
+            
+            String response = callOpenAI(prompt);
+            System.out.println("OpenAI Response: " + response);
+            
+            return parseFlashcards(response);
+        } catch (Exception e) {
+            System.err.println("Error calling OpenAI: " + e.getMessage());
+            e.printStackTrace();
+            return generateCustomFlashcards(request);
+        }
+    }
+    
     private List<FlashcardData> parseFlashcards(String response) {
         List<FlashcardData> flashcards = new ArrayList<>();
         try {
-            JsonNode jsonArray = objectMapper.readTree(response);
+            // Clean the response - remove any markdown formatting
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            JsonNode jsonArray = objectMapper.readTree(cleanResponse);
             if (jsonArray.isArray()) {
                 for (JsonNode card : jsonArray) {
-                    // Try both formats: question/answer and front/back
-                    String front = card.path("front").asText();
-                    String back = card.path("back").asText();
+                    // Try question/answer first (preferred format)
+                    String question = card.path("question").asText();
+                    String answer = card.path("answer").asText();
                     
-                    // Fallback to question/answer if front/back are empty
-                    if (front.isEmpty() && back.isEmpty()) {
-                        front = card.path("question").asText();
-                        back = card.path("answer").asText();
+                    // Fallback to front/back if question/answer are empty
+                    if (question.isEmpty() && answer.isEmpty()) {
+                        question = card.path("front").asText();
+                        answer = card.path("back").asText();
                     }
                     
-                    if (!front.isEmpty() && !back.isEmpty()) {
-                        flashcards.add(new FlashcardData(front, back));
+                    if (!question.isEmpty() && !answer.isEmpty()) {
+                        flashcards.add(new FlashcardData(question, answer));
                     }
                 }
             }
         } catch (Exception e) {
-            // If parsing fails, return empty list
             System.err.println("Error parsing AI response: " + e.getMessage());
+            System.err.println("Raw response: " + response);
         }
         return flashcards;
     }
 
+    private List<FlashcardData> generateCustomFlashcards(AiGenerationRequest request) {
+        String text = request.getText() != null ? request.getText() : "";
+        String topic = request.getTopic() != null ? request.getTopic() : "General";
+        int numberOfCards = request.getNumberOfCards();
+        
+        System.out.println("Custom Generation - Text: '" + text + "', Topic: '" + topic + "', Cards: " + numberOfCards);
+        
+        String normalizedText = text.toLowerCase().trim();
+        String normalizedTopic = topic.toLowerCase().trim();
+        
+        // Check for specific "when to use" format request
+        if (normalizedText.contains("question should be when") || 
+            normalizedText.contains("when we can use") ||
+            normalizedText.contains("when to use") ||
+            normalizedText.contains("when should we use") ||
+            normalizedText.contains("particular data structure") ||
+            (normalizedTopic.equals("pds") || normalizedTopic.contains("data structure"))) {
+            
+            System.out.println("Detected 'when to use' format request - generating specialized flashcards");
+            return generateWhenToUseFlashcards(topic, numberOfCards);
+        }
+        
+        return generateSimpleFlashcards(request);
+    }
+    
+    private List<FlashcardData> generateWhenToUseFlashcards(String topic, int numberOfCards) {
+        List<FlashcardData> flashcards = new ArrayList<>();
+        
+        // Normalize topic for better detection
+        String normalizedTopic = topic.toLowerCase().trim();
+        
+        // Generate "when to use" flashcards for Python data structures
+        // Check for various ways to indicate Python data structures
+        if (normalizedTopic.contains("python") || 
+            normalizedTopic.contains("data structure") ||
+            normalizedTopic.equals("pds") ||
+            normalizedTopic.contains("python data structures") ||
+            normalizedTopic.contains("py data") ||
+            normalizedTopic.contains("data struct")) {
+            
+            String[] dataStructureCards = {
+                "When you need to store an ordered, mutable collection that allows duplicates?|List",
+                "When you need an immutable, ordered collection that allows duplicates?|Tuple", 
+                "When you need to store unique elements with no duplicates?|Set",
+                "When you need to store key-value pairs with fast lookup?|Dictionary",
+                "When you need a LIFO (Last In, First Out) data structure?|Stack",
+                "When you need a FIFO (First In, First Out) data structure?|Queue",
+                "When you need to store data in a tree-like hierarchical structure?|Tree",
+                "When you need to represent relationships between objects?|Graph",
+                "When you need to store a large amount of data with fast search operations?|Hash Table",
+                "When you need to maintain sorted data with efficient insertion and deletion?|Binary Search Tree"
+            };
+            
+            String[] selectedCards = getRandomCards(dataStructureCards, numberOfCards);
+            for (String card : selectedCards) {
+                String[] parts = card.split("\\|", 2);
+                if (parts.length == 2) {
+                    flashcards.add(new FlashcardData(parts[0].trim(), parts[1].trim()));
+                }
+            }
+        } else {
+            // Generate generic "when to use" cards for other topics
+            for (int i = 0; i < numberOfCards; i++) {
+                flashcards.add(new FlashcardData(
+                    "When should you use " + topic + " concept " + (i + 1) + "?",
+                    "Specific use case for " + topic + " " + (i + 1)
+                ));
+            }
+        }
+        
+        return flashcards;
+    }
+    
     private List<FlashcardData> generateSimpleFlashcards(AiGenerationRequest request) {
         List<FlashcardData> flashcards = new ArrayList<>();
         String text = request.getText() != null ? request.getText() : "";
